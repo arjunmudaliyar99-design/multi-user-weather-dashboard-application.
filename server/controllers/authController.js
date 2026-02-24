@@ -4,17 +4,25 @@ const User = require('../models/User');
 
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { username, email, password } = req.body;
 
-    const existingUser = await User.findOne({ email });
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: 'Username, email and password are required' });
+    }
+
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      if (existingUser.username === username) {
+        return res.status(400).json({ message: 'Username already taken' });
+      }
+      return res.status(400).json({ message: 'Email already registered' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      name,
+      username,
+      name: username,
       email,
       password: hashedPassword,
     });
@@ -23,7 +31,7 @@ const register = async (req, res) => {
       expiresIn: '7d',
     });
 
-    res.status(201).json({ token, userId: user._id });
+    res.status(201).json({ token, userId: user._id, username: user.username });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -31,9 +39,13 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    const user = await User.findOne({ email });
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
+
+    const user = await User.findOne({ username });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -47,7 +59,7 @@ const login = async (req, res) => {
       expiresIn: '7d',
     });
 
-    res.json({ token, userId: user._id });
+    res.json({ token, userId: user._id, username: user.username });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -59,7 +71,7 @@ const getMe = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    res.json({ _id: user._id, username: user.username, name: user.name, email: user.email });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

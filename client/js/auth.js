@@ -7,10 +7,8 @@ const registerForm = document.getElementById('registerForm');
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
     const tabName = tab.getAttribute('data-tab');
-    
     tabs.forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    
     if (tabName === 'login') {
       loginForm.classList.add('active');
       registerForm.classList.remove('active');
@@ -23,28 +21,28 @@ tabs.forEach(tab => {
 
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  
-  const email = document.getElementById('loginEmail').value;
+
+  const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
   const errorDiv = document.getElementById('loginError');
-  
+  errorDiv.textContent = '';
+
   try {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       errorDiv.textContent = data.message || 'Login failed';
       return;
     }
-    
+
     localStorage.setItem('token', data.token);
+    localStorage.setItem('username', data.username);
     window.location.href = 'dashboard.html';
   } catch (error) {
     errorDiv.textContent = 'Network error. Please try again.';
@@ -54,29 +52,29 @@ loginForm.addEventListener('submit', async (e) => {
 
 registerForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  
-  const name = document.getElementById('registerUsername').value;
-  const email = document.getElementById('registerEmail').value;
+
+  const username = document.getElementById('registerUsername').value.trim();
+  const email = document.getElementById('registerEmail').value.trim();
   const password = document.getElementById('registerPassword').value;
   const errorDiv = document.getElementById('registerError');
-  
+  errorDiv.textContent = '';
+
   try {
     const response = await fetch(`${API_URL}/auth/register`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name, email, password }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email, password }),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       errorDiv.textContent = data.message || 'Registration failed';
       return;
     }
-    
+
     localStorage.setItem('token', data.token);
+    localStorage.setItem('username', data.username);
     window.location.href = 'dashboard.html';
   } catch (error) {
     errorDiv.textContent = 'Network error. Please try again.';
